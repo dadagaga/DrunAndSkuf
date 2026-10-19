@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DrunAndSkuf — лаунчер и сервер</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --grass:#5b8731; --grass-dark:#4a7028;
+    --stone:#3a3a3a; --stone-dark:#2b2b2b;
+    --dirt:#79553a; --dirt-dark:#5e422c;
+    --gold:#fcdb05; --gold-dark:#c9a70a;
+    --green:#3aa03a; --red:#e03434;
+    --text:#e8e8e8; --muted:#a8a8a8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family:'VT323', monospace;
+    font-size:22px; line-height:1.5;
+    color:var(--text);
+    background:#1c1c1c;
+  }
+  /* фоновая текстура "земли" сверху и "камня" снизу */
+  body::before {
+    content:""; position:fixed; inset:0; z-index:-1;
+    background:
+      radial-gradient(ellipse at 50% -10%, #2e4d1f 0%, transparent 60%),
+      linear-gradient(180deg, #222 0%, #1a1a1a 100%);
+  }
+  h1,h2,h3, .pixel { font-family:'Press Start 2P', monospace; }
+  h2 {
+    font-size:22px; color:var(--gold);
+    text-shadow:2px 2px 0 #000;
+    margin-bottom:20px; text-transform:uppercase;
+  }
+  section { padding:60px 20px; }
+  .wrap { max-width:900px; margin:0 auto; }
+  .panel {
+    background:var(--stone);
+    border:4px solid #000;
+    box-shadow:inset -4px -4px 0 rgba(0,0,0,.45), inset 4px 4px 0 rgba(255,255,255,.12), 0 6px 0 #000;
+    padding:24px;
+  }
+  .panel + .panel { margin-top:16px; }
+
+  /* ШАПКА */
+  header {
+    position:sticky; top:0; z-index:10;
+    background:var(--stone-dark);
+    border-bottom:4px solid #000;
+    padding:12px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  header .logo { font-family:'Press Start 2P',monospace; font-size:14px; color:var(--gold); text-shadow:2px 2px 0 #000; text-decoration:none; }
+  nav { display:flex; gap:6px; flex-wrap:wrap; }
+  nav a {
+    font-family:'Press Start 2P',monospace; font-size:10px;
+    color:var(--text); text-decoration:none;
+    padding:10px 12px; background:var(--dirt);
+    border:2px solid #000;
+    box-shadow:inset -2px -2px 0 rgba(0,0,0,.4), inset 2px 2px 0 rgba(255,255,255,.2);
+  }
+  nav a:hover { background:var(--grass); color:#fff; }
+
+  /* ГЕРОЙ */
+  .hero { text-align:center; padding:90px 20px 70px; }
+  .hero h1 {
+    font-size:clamp(20px, 5vw, 40px);
+    color:#fff; text-shadow:3px 3px 0 #000, -2px -2px 0 #3f6f1e;
+    margin-bottom:18px;
+  }
+  .hero p { color:var(--muted); max-width:600px; margin:0 auto 30px; }
+  .btn {
+    display:inline-block; font-family:'Press Start 2P',monospace;
+    font-size:14px; color:#fff; text-decoration:none;
+    padding:18px 26px; margin:6px;
+    background:var(--green); border:3px solid #000;
+    box-shadow:inset -3px -3px 0 rgba(0,0,0,.4), inset 3px 3px 0 rgba(255,255,255,.25), 0 5px 0 #000;
+    text-shadow:2px 2px 0 rgba(0,0,0,.6);
+  }
+  .btn:hover { filter:brightness(1.12); }
+  .btn:active { transform:translateY(3px); box-shadow:inset -3px -3px 0 rgba(0,0,0,.4), inset 3px 3px 0 rgba(255,255,255,.25), 0 2px 0 #000; }
+  .btn.gold { background:var(--gold); color:#1a1a1a; text-shadow:1px 1px 0 rgba(255,255,255,.4); }
+  .btn.small { font-size:10px; padding:12px 16px; }
+
+  /* БЛОКИ */
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+  .badge {
+    display:inline-block; font-family:'Press Start 2P',monospace; font-size:10px;
+    background:var(--gold); color:#111; padding:6px 10px; border:2px solid #000; margin-bottom:10px;
+  }
+  .badge.new { background:var(--grass); color:#fff; }
+  .badge.fix { background:var(--red); color:#fff; }
+  .date { color:var(--muted); font-size:18px; }
+  code, .ip {
+    font-family:'VT323',monospace; font-size:22px;
+    background:#111; color:#7fd27f; padding:2px 8px; border:2px solid #000;
+  }
+  ol, ul { padding-left:24px; }
+  li { margin:8px 0; }
+
+  /* FAQ — раскрывающиеся вопросы */
+  details { background:var(--stone); border:4px solid #000; box-shadow:inset -4px -4px 0 rgba(0,0,0,.45), inset 4px 4px 0 rgba(255,255,255,.12); margin-top:12px; }
+  summary {
+    font-family:'Press Start 2P',monospace; font-size:12px; line-height:1.6;
+    cursor:pointer; padding:16px 18px; color:#fff; list-style:none;
+  }
+  summary::-webkit-details-marker { display:none; }
+  summary::before { content:"+ "; color:var(--gold); }
+  details[open] summary::before { content:"- "; }
+  details[open] summary { border-bottom:2px solid #000; background:var(--stone-dark); }
+  details .answer { padding:16px 18px; }
+
+  footer {
+    text-align:center; padding:40px 20px 60px; color:var(--muted);
+    border-top:4px solid #000; background:var(--stone-dark);
+  }
+  footer .pixel { font-size:10px; margin-bottom:12px; color:var(--gold); }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#top">⛏ DRUN&amp;SKUF</a>
+  <nav>
+    <a href="#download">Скачать</a>
+    <a href="#news">Новости</a>
+    <a href="#about">О сервере</a>
+    <a href="#rules">Правила</a>
+    <a href="#faq">FAQ</a>
+    <a href="#join">Подключение</a>
+  </nav>
+</header>
+
+<main>
+  <!-- ГЕРОЙ -->
+  <section class="hero" id="top">
+    <h1>DRUN&amp;SKUF</h1>
+    <p>Авторская Minecraft-сборка: магия Hex Casting, механика и приключения. Скачай лаунчер, запускай и играй с нами!</p>
+    <a class="btn gold" href="ССЫЛКА_НА_СКАЧИВАНИЕ">⬇ Скачать лаунчер v1.1.1</a>
+    <div style="margin-top:26px">
+      <div class="pixel" style="font-size:10px; color:var(--muted); margin-bottom:8px;">IP СЕРВЕРА:</div>
+      <span class="ip">play.drunandskuf.xyz</span>
+    </div>
+  </section>
+
+  <!-- СКАЧАТЬ -->
+  <section id="download">
+    <div class="wrap">
+      <h2>⬇ Скачать</h2>
+      <div class="panel">
+        <span class="badge new">НОВАЯ ВЕРСИЯ</span>
+        <h3 style="margin:6px 0 10px">Лаунчер DrunAndSkuf v1.1.1</h3>
+        <p>Дата сборки: 17.10.2026. Minecraft 1.20.1 (Fabric), модпак собран и настроен — всё устанавливается автоматически.</p>
+        <p style="margin-top:16px">
+          <a class="btn" href="ССЫЛКА_НА_СКАЧИВАНИЕ">Скачать для Windows</a>
+          <a class="btn small" href="ССЫЛКА_НА_СКАЧИВАНИЕ">Другие версии</a>
+        </p>
+        <p style="margin-top:16px; color:var(--muted)">Если антивирус ругается на лаунчер — это ложное срабатывание, добавь файл в исключения. Если что-то не запускается, смотри FAQ ниже.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- НОВОСТИ -->
+  <section id="news">
+    <div class="wrap">
+      <h2>📜 Новости</h2>
+      <div class="panel">
+        <span class="badge new">UPDATE</span>
+        <h3>Сборка v1.1.1</h3>
+        <div class="date">17.10.2026</div>
+        <p>Обновил лаунчер: починил автозагрузку модов, добавил новые моды в сборку и ускорил первый запуск. Меняй версию в лаунчере — сервер уже готов!</p>
+      </div>
+      <div class="panel">
+        <span class="badge fix">FIX</span>
+        <h3>Краш-фиксы</h3>
+        <div class="date">—</div>
+        <p>Исправлены вылеты при входе на сервер и конфликты модов. Полный список изменений — в релизах на GitHub.</p>
+      </div>
+      <!-- ШАБЛОН: скопируй этот блок для новой новости
+      <div class="panel">
+        <span class="badge new">UPDATE</span>
+        <h3>Заголовок новости</h3>
+        <div class="date">01.01.2027</div>
+        <p>Текст новости.</p>
+      </div>
+      -->
+    </div>
+  </section>
+
+  <!-- О СЕРВЕРЕ -->
+  <section id="about">
+    <div class="wrap">
+      <h2>⛏ О сервере</h2>
+      <div class="grid">
+        <div class="panel"><h3>Магия</h3><p>Hex Casting, Patchouli и другие магические моды — заклинания, изучение, артефакты.</p></div>
+        <div class="panel"><h3>Механика</h3><p>Валкирии, технологии и улучшенный выживач: играть интереснее, чем в ванильку.</p></div>
+        <div class="panel"><h3>Кооп</h3><p>Строй базы, объединяйся с игроками, исследуй мир вместе с нами.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ПРАВИЛА -->
+  <section id="rules">
+    <div class="wrap">
+      <h2>🚫 Правила</h2>
+      <div class="panel">
+        <ol>
+          <li><b>Не гриферить.</b> Разрушать чужие постройки и воровать ресурсы запрещено.</li>
+          <li><b>Не читерить.</b> X-ray, читы, дюпы и сторонние клиенты — бан без предупреждения.</li>
+          <li><b>Уважай других.</b> Оскорбления и токсичность в чате не приветствуются.</li>
+          <li><b>Не спамить.</b> Реклама, флуд и капс — мут.</li>
+          <li><b>Вопросы решаем словами.</b> Конфликты разбираются через администрацию, а не PvP.</li>
+        </ol>
+        <p style="margin-top:12px; color:var(--muted)">Нарушения фиксируются администрацией. Повторные — мут или бан навсегда.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="wrap">
+      <h2>❓ FAQ</h2>
+
+      <details>
+        <summary>Как подключиться к серверу?</summary>
+        <div class="answer">
+          <p>1) Скачай лаунчер кнопкой выше.<br>2) Запусти его — модпак установится сам.<br>3) В лаунчере введи логин и жми «Играть».<br>4) В Minecraft добавь сервер: <code>play.drunandskuf.xyz</code> — и подключайся.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Лаунчер не запускается / крашится. Что делать?</summary>
+        <div class="answer">
+          <p>Убедись, что установлена Java 17 (для версии 1.20.1). Если стоит другая — обнови её. Также попробуй запустить лаунчер от имени администратора. Не помогло — напиши в Discord/VK сервера.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Антивирус ругается на лаунчер. Это безопасно?</summary>
+        <div class="answer">
+          <p>Лаунчер написан самостоятельно и не подписан цифровой подписью, поэтому антивирусы иногда дают ложное срабатывание. Добавь файл в исключения. Если не доверяешь — всегда можешь собрать клиент вручную из репозитория GitHub.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Какая версия Minecraft нужна?</summary>
+        <div class="answer">
+          <p>Текущая сборка: <b>Minecraft 1.20.1 (Fabric)</b>. Лаунчер скачивает нужную версию и моды автоматически — отдельно ничего ставить не надо.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Можно играть без модов?</summary>
+        <div class="answer">
+          <p>Нет, сервер требует установленный модпак — без него ты просто не сможешь подключиться (вернее, подключишься, но многое будет работать неправильно).</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Меня забанили. Как разбаниться?</summary>
+        <div class="answer">
+          <p>Напиши администрацию в Discord/VK сервера, укажи свой ник и причину бана. Если нарушение серьёзное — разбан не гарантируется.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Где найти ссылки на Discord/VK сервера?</summary>
+        <div class="answer">
+          <p>Пока я не добавил их в шаблон — вписывай свои ссылки в раздел «О сервере» или «Подключение» в коде сайта. Хочешь — скинь их мне, и я добавлю.</p>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <!-- ПОДКЛЮЧЕНИЕ -->
+  <section id="join">
+    <div class="wrap">
+      <h2>🔌 Как подключиться</h2>
+      <div class="panel">
+        <ol>
+          <li>Скачай и запусти лаунчер.</li>
+          <li>Введи свой никнейм.</li>
+          <li>Дождись загрузки модпака.</li>
+          <li>Добавь сервер: <code>play.drunandskuf.xyz</code></li>
+          <li>Играй! 🎮</li>
+        </ol>
+        <p style="margin-top:12px; color:var(--muted)">Если лаунчер завис на загрузке — проверь интернет и попробуй ещё раз, либо скачай модпак вручную из релизов.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="pixel">⛏ DRUN&amp;SKUF ⛏</div>
+  <p>Сайт сделан игроками для игроков. Minecraft — торговая марка Mojang Studios, мы не связаны с Mojang.</p>
+  <p style="margin-top:8px"><a href="https://github.com/DrunAndSkuf" style="color:var(--gold)">GitHub проекта</a></p>
+</footer>
+
+</body>
+</html>
